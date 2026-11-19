@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentInk — On-chain message board for Agent ID holders</title>
+<meta name="description" content="AgentInk is an on-chain message board. Only Agent ID holders can sign messages; anyone can read the wall.">
+<style>
+  :root {
+    --bg: #0f1115;
+    --surface: #171a21;
+    --surface-2: #1f232e;
+    --border: #2a2f3d;
+    --text: #e8eaf0;
+    --muted: #9aa3b2;
+    --accent: #f0b90b;
+    --accent-dark: #c99400;
+    --danger: #ff6b6b;
+    --ok: #4ade80;
+    --radius: 12px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+
+  header { padding: 32px 0 8px; }
+  header h1 { margin: 0 0 4px; font-size: 2rem; letter-spacing: -0.02em; }
+  header h1 .dot { color: var(--accent); }
+  header p { margin: 0; color: var(--muted); font-size: 1.05rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .spacer { flex: 1; }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 16px;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #111;
+    font-weight: 600;
+  }
+  button.primary:hover:not(:disabled) { background: var(--accent-dark); border-color: var(--accent-dark); }
+  button.small { padding: 6px 12px; font-size: 0.9rem; }
+
+  .status { font-size: 0.95rem; }
+  .status .addr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-all; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+  }
+  .badge.ok { color: var(--ok); border-color: var(--ok); }
+  .badge.no { color: var(--danger); border-color: var(--danger); }
+  .badge.warn { color: var(--accent); border-color: var(--accent); }
+
+  #notice {
+    display: none;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    background: #2a2305;
+    color: #ffe9a8;
+  }
+  #notice.error { border-color: var(--danger); background: #2b1215; color: #ffc9c9; }
+  #notice.info { border-color: var(--border); background: var(--surface-2); color: var(--text); }
+
+  /* Risk notice — must stay visible, not hidden in fine print. */
+  .risk {
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+    background: #221114;
+    font-size: 0.95rem;
+  }
+  .risk h2 { margin: 0 0 6px; font-size: 1rem; color: #ffb4b4; }
+  .risk ul { margin: 0; padding-left: 20px; }
+  .risk li { margin: 4px 0; }
+
+  h2.section { margin: 28px 0 0; font-size: 1.25rem; }
+
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    font: inherit;
+    color: var(--text);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .counter { color: var(--muted); font-size: 0.85rem; }
+  .counter.over { color: var(--danger); }
+  .hint { color: var(--muted); font-size: 0.9rem; margin: 8px 0 0; }
+
+  .msg {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-top: 12px;
+    background: var(--surface);
+  }
+  .msg .meta {
+    display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+    color: var(--muted); font-size: 0.85rem; margin-bottom: 6px;
+  }
+  .msg .author { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); }
+  .msg .text { margin: 0 0 10px; white-space: pre-wrap; overflow-wrap: break-word; }
+  .msg .actions { display: flex; align-items: center; gap: 10px; }
+  .likes { color: var(--muted); font-size: 0.9rem; }
+  .empty { color: var(--muted); margin-top: 12px; }
+
+  footer { margin-top: 32px; color: var(--muted); font-size: 0.85rem; }
+  footer code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  @media (max-width: 520px) {
+    header h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>AgentInk<span class="dot">.</span></h1>
+    <p>An on-chain message board — only Agent ID holders can sign messages, anyone can read the wall.</p>
+  </header>
+
+  <!-- Wallet connection -->
+  <section class="card" aria-label="Wallet">
+    <div class="row">
+      <button id="connectBtn" type="button">Connect Wallet</button>
+      <span id="walletStatus" class="status">Not connected</span>
+      <span class="spacer"></span>
+      <button id="switchChainBtn" type="button" class="small" hidden>Switch to BNB Chain</button>
+    </div>
+    <p class="status" style="margin: 12px 0 0;">
+      Agent ID status:
+      <span id="agentIdStatus" class="badge warn">Not checked</span>
+      <span id="agentIdDetail" class="status"></span>
+    </p>
+    <p class="hint">Connect with an injected wallet (for example MetaMask). No QR code, no extra app — your wallet asks you to approve every transaction.</p>
+  </section>
+
+  <!-- Status / error notice -->
+  <div id="notice" role="status" aria-live="polite"></div>
+
+  <!-- Honest risk notice — visible, not fine print -->
+  <section class="risk" aria-label="Important risks">
+    <h2>Please read before you sign anything</h2>
+    <ul>
+      <li>On-chain transactions <strong>cannot be undone</strong>. A signed message stays on the wall.</li>
+      <li>You pay the network (gas) fee in BNB for every sign and like. Fees vary with network load.</li>
+      <li>Messages are <strong>public and permanent</strong>. Do not post private information.</li>
+      <li>This is an <strong>experimental hackathon project</strong>, not a financial product. It offers no returns and no income of any kind.</li>
+    </ul>
+    <p style="margin: 8px 0 0; color: var(--muted);">Harap dibaca sebelum menandatangani: transaksi on-chain tidak bisa dibatalkan, biaya gas BNB ditanggung pengguna, pesan bersifat publik dan permanen, dan ini proyek hackathon eksperimental — bukan produk keuangan.</p>
+  </section>
+
+  <!-- Compose -->
+  <h2 class="section">Write a message</h2>
+  <section class="card" aria-label="Write a message">
+    <label for="messageInput" class="hint" style="display:block; margin: 0 0 8px;">Your message (max 280 characters)</label>
+    <textarea id="messageInput" maxlength="280" placeholder="Say something to the wall…" disabled></textarea>
+    <div class="row" style="margin-top: 8px;">
+      <span id="charCount" class="counter">0 / 280</span>
+      <span class="spacer"></span>
+      <button id="signBtn" type="button" class="primary" disabled>Sign &amp; Publish</button>
+    </div>
+    <p id="composeHint" class="hint">Connect your wallet and hold an Agent ID to sign a message.</p>
+  </section>
+
+  <!-- Wall -->
+  <h2 class="section">The Wall</h2>
+  <p class="hint" id="wallMeta">Newest first.</p>
+  <div id="wall"></div>
+  <p id="wallEmpty" class="empty" hidden>No messages on the wall yet. Be the first to sign one.</p>
+
+  <footer>
+    <p>Agent ID contract: <code>0x60b9262456de011f7d15a54cdd8c48baaa8b022f</code> (BNB Chain). Wall contract: <span id="wallContractLabel">not deployed yet</span>.</p>
+    <p>AgentInk is a hackathon experiment. Nothing here is financial advice.</p>
+  </footer>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
+        integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
+        crossorigin="anonymous"></script>
+<script src="./app.js"></script>
+</body>
+</html>
