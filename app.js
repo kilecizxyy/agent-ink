@@ -16,7 +16,7 @@
 /* ------------------------------------------------------------------ */
 const CONFIG = {
   // AgentWall contract address on BNB Chain. Empty = not deployed yet.
-  AGENT_WALL_ADDRESS: "",
+  AGENT_WALL_ADDRESS: "0x890B16f7f7198b7d1c5b9410BC99D9D99EF4F9c2",
   // Agent ID contract (ERC-721) on BNB Chain — balanceOf > 0 = holder.
   AGENT_ID_ADDRESS: "0x60b9262456de011f7d15a54cdd8c48baaa8b022f",
   // BNB Chain mainnet.
