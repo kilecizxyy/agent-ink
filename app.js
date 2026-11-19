@@ -76,6 +76,7 @@ const PREVIEW_MESSAGES = [
 /* State                                                               */
 /* ------------------------------------------------------------------ */
 let provider = null;
+let readProvider = null;
 let signer = null;
 let account = null;
 let isHolder = false;
@@ -302,6 +303,17 @@ function contractDeployed() {
   return CONFIG.AGENT_WALL_ADDRESS && CONFIG.AGENT_WALL_ADDRESS.trim() !== "";
 }
 
+/* Read-only provider for the public wall: the injected wallet provider
+ * when connected, otherwise a public BSC RPC so visitors can read the
+ * wall without connecting a wallet. Writes still need the wallet. */
+function getReadProvider() {
+  if (provider) return provider;
+  if (!readProvider) {
+    readProvider = new ethers.JsonRpcProvider("https://bsc-dataseed.binance.org");
+  }
+  return readProvider;
+}
+
 function getWallContract() {
   if (!contractDeployed() || !signer) return null;
   if (!wallContract) {
@@ -320,7 +332,7 @@ async function loadWall() {
 
   els.wallMeta.textContent = "Newest first. Loading…";
   try {
-    const readOnly = new ethers.Contract(CONFIG.AGENT_WALL_ADDRESS, AGENT_WALL_ABI, provider);
+    const readOnly = new ethers.Contract(CONFIG.AGENT_WALL_ADDRESS, AGENT_WALL_ABI, getReadProvider());
     let messages = null;
 
     // Prefer getTopMessages (returns message ids, newest first is done by
